@@ -30,18 +30,17 @@
 // the plate by ~4 mm above and below in Y, leaving open air for
 // the device's clip hooks to wrap around.
 //
-// Print orientation:
-//   Both halves print with the bore axis VERTICAL on the bed
-//   (design Y → print Z). The body and bolt ears extrude as
-//   constant cross-sections per layer — no overhangs there.
-//   Half A's RAIL FLANGES need supports: the 4 mm flange overhangs
-//   (extending past the plate in design ±Y, which becomes print
-//   ±Z) form thin shelves cantilevered in print -Y, beyond the
-//   body's curvature. Slicer support is required under those two
-//   strips. The hat top and plate itself print fine without help.
-//
-//   For Half B (no rail), the bottom of the print is just the
-//   half-annulus footprint of the body plus its two ears.
+// Print orientation (recommended):
+//   Half A (plate + rail): lay it RAIL-FLANGE SIDE DOWN — the flat
+//   rail face on the bed. The flange overhangs then rest directly
+//   on the build plate (no support needed there), but the bolt
+//   ears / screw-hole area overhang the bed, so add supports
+//   around the screw holes.
+//   Half B (no rail): print with the bore axis VERTICAL — it sits
+//   as a half-annulus tube on the bed; body and ears extrude as a
+//   constant cross-section per layer, no supports needed.
+//   The half_*_print() wrappers below just give a canonical export
+//   placement; re-orient Half A in your slicer as above.
 //
 // Top-of-file `mode` selects what to render:
 //   "half_a" / "half_b" / "assembly" / "exploded"

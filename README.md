@@ -34,7 +34,7 @@ down the pipe.
 
 | Mode | Renders |
 |------|---------|
-| `"half_a"` | Rail half — print one; needs supports under the rail-flange overhangs. |
+| `"half_a"` | Rail half — print one; rail-flange side down, supports around the screw-hole area. |
 | `"half_b"` | Plain half — print one. |
 | `"assembly"` | Both halves on a transparent dummy pipe. |
 | `"exploded"` | Both halves separated with dummy bolts and nuts. |
@@ -43,21 +43,15 @@ Render (F6), export STL.
 
 ## Print orientation
 
-**Both halves print with the bore axis vertical** — the part
-stands like a tall half-tube on the bed (design Y → print Z).
-The body and bolt ears extrude as a constant cross-section per
-layer with no overhangs.
+**Half A (rail half):** prints **rail-flange side down** — the
+flat rail face on the bed. The flange overhangs land directly on
+the build plate, so they need no support, but the bolt-ear /
+screw-hole area now overhangs the bed: **add supports around the
+screw holes.**
 
-The rail runs **horizontally**, perpendicular to the pipe (its
-length along the bed, hat opening sideways). The hat top and the
-plate print fine, but Half A's **flange overhangs** — the ~4 mm
-strips of flange that extend past the plate along the pipe axis
-(print ±Z) — are thin shelves cantilevered out past the body's
-curve. **The slicer needs supports under those two strips.**
-
-Half B has no rail, so its footprint is just the half-annulus of
-the body plus its two ears — no supports needed. Both halves use
-the same transform so they sit on the bed identically.
+**Half B (plain half):** prints with the bore axis vertical — it
+stands as a half-tube on the bed, body and ears extruding as a
+constant cross-section per layer, **no supports needed.**
 
 ## Print settings
 
@@ -66,8 +60,8 @@ the same transform so they sit on the bed identically.
 - **Layer height:** 0.2 mm.
 - **Infill:** 20 % gyroid or grid.
 - **Perimeters:** 3.
-- **Supports:** under Half A's two rail-flange overhangs only;
-  none for Half B.
+- **Supports:** around Half A's screw-hole area only; none for
+  Half B.
 
 ## Rail-clip clearance — why the plate is narrower than the rail
 

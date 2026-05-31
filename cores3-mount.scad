@@ -102,7 +102,7 @@ EAR_THK       = 6.0;    // bolt-ear thickness (perpendicular to
 //   >>> SENSOR_* dims are "MEASURE YOUR BOARD" values <<<
 //   >>> Keep the pad a plain rectangle (Y-constant, no fillets)
 //       or the no-support vertical print of Half B breaks. <<<
-SENSOR_ENABLE   = true;   // master on/off
+SENSOR_ENABLE   = false;   // master on/off
 SENSOR_EAR_SIDE = +1;     // which ear: +1 (+X) or -1 (-X)
 
 // Hole pattern (measured off the board)

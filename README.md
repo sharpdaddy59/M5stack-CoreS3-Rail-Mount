@@ -14,6 +14,10 @@ Slide the device on from either end of the rail. Reposition height
 by loosening the clamp bolts and sliding the whole assembly up or
 down the pipe.
 
+The plain clamp half can optionally carry a **Seeed Grove DHT20**
+temperature/humidity sensor on an extended bolt ear — see
+[DHT20 sensor mount](#dht20-sensor-mount-optional) below.
+
 ## Files
 
 | File | Re-render with | Notes |
@@ -21,6 +25,7 @@ down the pipe.
 | [`cores3-mount.scad`](cores3-mount.scad) | — | Source. Set `mode` at the top. |
 | `cores3-mount_rail.stl` | `mode = "half_a"` (the rail half) | Print **one** |
 | `cores3-mount_clamp.stl` | `mode = "half_b"` (the plain half) | Print **one** |
+| `cores3-mount_clamp_DHT20.stl` | `mode = "half_b"` + `SENSOR_ENABLE = true` | Clamp half with the [DHT20 pad](#dht20-sensor-mount-optional). Print this **instead of** the plain clamp half. |
 
 ## BOM (per mount)
 
@@ -29,6 +34,12 @@ down the pipe.
   hidden behind the rail once installed)
 - A piece of 1-1/2" Schedule-40 PVC pipe (nominal OD 48.26 mm)
 - An M5Stack CoreS3
+
+**Optional — DHT20 sensor mount** (when `SENSOR_ENABLE = true`):
+
+- 1 × Seeed Grove DHT20 temperature/humidity board
+- 3 × M2 screws (length ≈ board thickness + pad thickness + nut)
+- 3 × M2 hex nuts (captive in the pad's back-face pockets)
 
 ## Render
 
@@ -63,6 +74,41 @@ constant cross-section per layer, **no supports needed.**
 - **Supports:** around Half A's screw-hole area only; none for
   Half B.
 
+## DHT20 sensor mount (optional)
+
+Half B (the plain clamp half) can carry a **Seeed Grove DHT20**
+temp/humidity board on a flat pad that extends one bolt ear. Turn
+it on with `SENSOR_ENABLE = true` near the top of the SCAD; with it
+`false` the clamp renders exactly as stock.
+
+How it's laid out:
+
+- The board bolts **flat** against the ear's outer (back) face and
+  is mounted **vertically** — its long axis runs along the pipe so
+  it stands up alongside the clamp rather than cantilevering far
+  radially.
+- Three **M2** through-holes match the Grove footprint: a pair on
+  the connector edge `SENSOR_PAIR_DX` apart (20 mm), plus a single
+  hole `SENSOR_PAIR_TO_SINGLE` away (30 mm). M2 nuts drop into
+  **captive hex pockets on the pad's inner face**, so you only turn
+  the screw.
+- The holes sit **outboard of the ear tip** (`SENSOR_HOLE_INSET_X`)
+  so the board clears the M4 clamp bolt — the bolt-head counterbore
+  stays open through the pad, leaving hex-key access beside the
+  board. **Tighten the clamp bolts before fitting the sensor.**
+- The pad sits **flush with one clamp end** and the board overhangs
+  the other; that flush edge is what keeps Half B printing
+  **support-free**. Print with the flush end on the bed
+  (`SENSOR_EXTEND_DIR = -1`, the default, needs no re-orientation;
+  `+1` flips which end overhangs and wants a slicer flip).
+
+The sensor dimensions are placeholders — **measure your board** and
+adjust `SENSOR_PAIR_DX`, `SENSOR_PAIR_TO_SINGLE`, `SENSOR_HOLE_DIA`,
+`SENSOR_NUT_FLATS`/`SENSOR_NUT_DEPTH`, and `SENSOR_HOLE_INSET_X`.
+Built-in `assert`s catch a pad that's too thin for the nut or an
+inner hole that creeps back over the bolt head. Keep the pad a plain
+rectangle (no Y-varying fillets) or the no-support print breaks.
+
 ## Rail-clip clearance — why the plate is narrower than the rail
 
 In a real DIN-rail install, the rail's flanges sit on a
@@ -90,6 +136,10 @@ pipe and dry-fit the CoreS3 onto the rail:
   `CLAMP_GAP`.
 - **Captive nut spins in its hex pocket** → reduce `NUT_FLATS`
   by 0.1 mm.
+- **DHT20 won't sit / screws miss the holes** → re-measure the
+  board and correct `SENSOR_PAIR_DX` / `SENSOR_PAIR_TO_SINGLE`;
+  for tight screws bump `SENSOR_HOLE_DIA`. **M2 nut spins** →
+  reduce `SENSOR_NUT_FLATS` by 0.1 mm.
 
 ## Assembly
 
@@ -107,6 +157,11 @@ pipe and dry-fit the CoreS3 onto the rail:
    few turns at a time so the halves close on the pipe square.
 5. Slide the CoreS3 onto the rail from either end; gravity seats
    its clip on the lower flange.
+6. **If using the DHT20 mount:** seat the three M2 nuts in the
+   pad's back-face pockets, lay the board on the outer face, and
+   drive the M2 screws from the board side. Do this *after* the
+   clamp bolts are tight — the bolt head stays accessible beside
+   the board, but it's easiest to reach with the sensor off.
 
 ## Re-aiming or relocating
 

@@ -76,6 +76,68 @@ EAR_LEN       = 12.0;   // bolt-ear extension past the shell
 EAR_THK       = 6.0;    // bolt-ear thickness (perpendicular to
                         // mating plane)
 
+// ----- DHT20 sensor mounting pad (Half B only) ---------------
+// Extends ONE bolt ear into a flat pad. The Grove DHT20 breakout
+// bolts down FLAT against the ear's outer face, mounted VERTICAL:
+// its long axis runs along Y (the pipe axis) so it stands up
+// alongside the pipe instead of cantilevering radially.
+//
+// 3 mounting holes (Seeed Grove DHT20): a PAIR on the Grove-
+// connector edge, SENSOR_PAIR_DX apart along X, and a SINGLE hole
+// SENSOR_PAIR_TO_SINGLE away along Y.
+//
+// The holes sit OUTBOARD of the ear tip (SENSOR_HOLE_INSET_X), so
+// the board clears the central M4 clamp bolt purely in X -- the
+// bolt-head counterbore stays open through the pad for hex-key
+// access beside the board. Because the board (~40 mm) is longer
+// than the clamp, the pad hangs past ONE clamp end (the board's
+// natural overhang) and sits FLUSH with the OTHER. That flush edge
+// is what lets Half B print support-free: the pad's outboard strip
+// is carried straight up from the bed. A centred pad would
+// overhang both ends and need supports.
+//
+// M2 screws from the board side; M2 nuts are CAPTIVE in hex
+// pockets on the pad's INNER face (same idea as Half A's
+// nut_pocket) so you only turn the screw.
+//   >>> SENSOR_* dims are "MEASURE YOUR BOARD" values <<<
+//   >>> Keep the pad a plain rectangle (Y-constant, no fillets)
+//       or the no-support vertical print of Half B breaks. <<<
+SENSOR_ENABLE   = true;   // master on/off
+SENSOR_EAR_SIDE = +1;     // which ear: +1 (+X) or -1 (-X)
+
+// Hole pattern (measured off the board)
+SENSOR_PAIR_DX        = 20.0; // pair spacing along X  (connector edge)
+SENSOR_PAIR_TO_SINGLE = 30.0; // pair -> single hole, along Y
+SENSOR_SINGLE_DX      = 0.0;  // single-hole X offset from pair centre
+                              // (0 = centred between the pair)
+SENSOR_HOLE_INSET_X   = 46.0; // X of the INNER pair hole. Pushed well
+                              // past the M4 bolt head (outer edge at
+                              // EAR_BOLT_X+HEAD_DIA/2 ~= 38) so the board
+                              // sits fully clear of it with a margin.
+                              // Lower = tucked in tighter (min ~40);
+                              // raise it if your PCB edge still shadows
+                              // the bolt.
+SENSOR_HOLE_DIA       = 2.4;  // M2 clearance, through the pad
+
+// Print alignment: the board hangs past one clamp end; the pad is
+// flush with the OTHER end so it prints support-free.
+SENSOR_EXTEND_DIR = -1;   // which end the board hangs past:
+                          //  -1 = past the Y=0 end (pad flush at
+                          //       Y=CLAMP_LEN, the default print-bed
+                          //       face -> no part change needed)
+                          //  +1 = past the Y=CLAMP_LEN end (flip the
+                          //       part in the slicer to print)
+
+// Pad
+SENSOR_PAD_THK    = EAR_THK;  // thickness (Z); holds the captive nut,
+                          // keep <= EAR_THK and > nut depth + ~1
+SENSOR_PAD_MARGIN = 5.0;  // border around the hole bounding box
+
+// Captive M2 hex-nut pockets on the pad's INNER (+Z) face
+SENSOR_NUT_POCKET = true;
+SENSOR_NUT_FLATS  = 4.0;   // M2 nut across-flats (MEASURE)
+SENSOR_NUT_DEPTH  = 1.8;   // M2 nut thickness  (MEASURE)
+
 // ----- Mount plate (Half A only) -----------------------------
 // A short radial cantilever between the body and the rail.
 // Y extent matches the rail HAT TOP width so the rail's flanges
@@ -123,6 +185,36 @@ EAR_INNER_X  = sqrt(max(0.01,
 EAR_OUTER_X  = X_MATE + EAR_LEN;
 EAR_BOLT_X   = X_MATE + EAR_LEN/2;
 EAR_Y        = CLAMP_LEN/2;
+
+// ----- DHT20 pad derived -------------------------------------
+SP_S       = SENSOR_EAR_SIDE;
+SP_Z_OUTER = -(G + EAR_THK);                  // pad outer face = ear outer
+SP_Z_INNER = SP_Z_OUTER + SENSOR_PAD_THK;     // pad inner face (nut side)
+
+// Hole X magnitudes (un-signed; ear side applied in the modules)
+H_XI = SENSOR_HOLE_INSET_X;                                // inner pair
+H_XO = SENSOR_HOLE_INSET_X + SENSOR_PAIR_DX;               // outer pair
+H_XS = SENSOR_HOLE_INSET_X + SENSOR_PAIR_DX/2 + SENSOR_SINGLE_DX; // single
+
+// Hole Y. The board hangs past one clamp end; the near (pair) row
+// sits one margin inside the flush end, the single row reaches out.
+SP_FLUSH_Y = SENSOR_EXTEND_DIR < 0 ? CLAMP_LEN : 0;
+H_YP = SP_FLUSH_Y + SENSOR_EXTEND_DIR * SENSOR_PAD_MARGIN;      // pair row
+H_YS = H_YP + SENSOR_EXTEND_DIR * SENSOR_PAIR_TO_SINGLE;        // single row
+
+// Pad: spans from the flush clamp end out over all three holes.
+// Inner X edge reaches back into the ear for a solid weld.
+PAD_X_LO = min(EAR_OUTER_X - 8, min(H_XI, H_XS) - SENSOR_PAD_MARGIN);
+PAD_X_HI = max(H_XO, H_XS) + SENSOR_PAD_MARGIN;
+PAD_Y_LO = min(SP_FLUSH_Y, min(H_YP, H_YS) - SENSOR_PAD_MARGIN);
+PAD_Y_HI = max(SP_FLUSH_Y, max(H_YP, H_YS) + SENSOR_PAD_MARGIN);
+
+assert(SENSOR_PAD_THK <= EAR_THK, "SENSOR_PAD_THK must be <= EAR_THK");
+assert(SENSOR_PAD_THK >= SENSOR_NUT_DEPTH + 0.8,
+       "SENSOR_PAD_THK too thin for the captive nut + wall");
+assert(SENSOR_HOLE_INSET_X >= EAR_BOLT_X + HEAD_DIA/2,
+       "inner hole over the M4 bolt head — increase SENSOR_HOLE_INSET_X");
+assert(abs(SENSOR_EXTEND_DIR) == 1, "SENSOR_EXTEND_DIR must be +1 or -1");
 
 // Plate footprint:
 PLATE_Z_INNER = R_BORE;                 // sunk into body wall
@@ -212,6 +304,43 @@ module nut_pocket() {
 }
 
 // =============================================================
+// DHT20 SENSOR PAD (Half B only)
+// =============================================================
+
+// Flat rectangular pad on the chosen ear's OUTER face, sized to
+// cover all three mounting holes. A plain cube (Y-constant, no
+// fillets) so Half B still prints support-free with the bore axis
+// vertical. Its inner X edge overlaps the ear for a clean weld.
+module sensor_pad_solid() {
+    x0 = SP_S > 0 ? PAD_X_LO : -PAD_X_HI;
+    translate([x0, PAD_Y_LO, SP_Z_OUTER])
+        cube([PAD_X_HI - PAD_X_LO, PAD_Y_HI - PAD_Y_LO, SENSOR_PAD_THK]);
+}
+
+// The three sensor mounting-hole centres (pair + single).
+function sensor_hole_points() =
+    [ [SP_S*H_XI, H_YP], [SP_S*H_XO, H_YP], [SP_S*H_XS, H_YS] ];
+
+// Through-holes (along Z) for the M2 screws.
+module sensor_holes() {
+    for (p = sensor_hole_points())
+        translate([p[0], p[1], SP_Z_OUTER - 1])
+            cylinder(h = SENSOR_PAD_THK + 2, d = SENSOR_HOLE_DIA);
+}
+
+// Captive M2 hex-nut pockets opening on the pad's INNER (+Z) face
+// (the side away from the board). Reuses the nut_pocket() hex
+// idiom (d = FLATS/cos(30), $fn=6). Nuts drop in from the inner
+// side; the screw threads into them from the board side.
+module sensor_nut_pockets() {
+    if (SENSOR_NUT_POCKET)
+        for (p = sensor_hole_points())
+            translate([p[0], p[1], SP_Z_INNER - SENSOR_NUT_DEPTH])
+                cylinder(h = SENSOR_NUT_DEPTH + 0.5,
+                         d = SENSOR_NUT_FLATS / cos(30), $fn = 6);
+}
+
+// =============================================================
 // PLATE (Half A only)
 // =============================================================
 
@@ -283,9 +412,13 @@ module half_a() {
 
 module half_b() {
     difference() {
-        body_extrude() half_b_body_2d();
+        union() {
+            body_extrude() half_b_body_2d();
+            if (SENSOR_ENABLE) sensor_pad_solid();
+        }
         bolt_through();
         head_counterbore();
+        if (SENSOR_ENABLE) { sensor_holes(); sensor_nut_pockets(); }
     }
 }
 

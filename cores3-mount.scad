@@ -78,31 +78,35 @@ EAR_THK       = 6.0;    // bolt-ear thickness (perpendicular to
 
 // ----- DHT20 sensor mounting pad (Half B only) ---------------
 // Extends ONE bolt ear into a flat pad. The Grove DHT20 breakout
-// bolts down FLAT against the ear's outer face, mounted VERTICAL:
-// its long axis runs along Y (the pipe axis) so it stands up
-// alongside the pipe instead of cantilevering radially.
+// bolts down FLAT against the pad's INNER (+Z) face, mounted
+// VERTICAL: its long axis runs along Y (the pipe axis) so it stands
+// up alongside the pipe instead of cantilevering radially.
 //
 // 3 mounting holes (Seeed Grove DHT20): a PAIR on the Grove-
 // connector edge, SENSOR_PAIR_DX apart along X, and a SINGLE hole
 // SENSOR_PAIR_TO_SINGLE away along Y.
 //
-// The holes sit OUTBOARD of the ear tip (SENSOR_HOLE_INSET_X), so
-// the board clears the central M4 clamp bolt purely in X -- the
-// bolt-head counterbore stays open through the pad for hex-key
-// access beside the board. Because the board (~40 mm) is longer
-// than the clamp, the pad hangs past ONE clamp end (the board's
-// natural overhang) and sits FLUSH with the OTHER. That flush edge
-// is what lets Half B print support-free: the pad's outboard strip
-// is carried straight up from the bed. A centred pad would
-// overhang both ends and need supports.
+// The holes sit OUTBOARD of Half A's bolt-ear tip (EAR_OUTER_X),
+// so the +Z face there is open air -- the board can mount on it
+// without fouling Half A on assembly. Mounting on +Z keeps the M4
+// clamp-bolt heads and their hex key alone on the OUTER (-Z) back
+// face, completely clear of the board (and the clamp can still be
+// loosened/repositioned with the CoreS3 clipped on). The M4
+// bolt-head counterbore still passes through the pad's inner weld
+// strip, opening only on the back. Because the board (~40 mm) is
+// longer than the clamp, the pad hangs past ONE clamp end (the
+// board's natural overhang) and sits FLUSH with the OTHER. That
+// flush edge is what lets Half B print support-free: the pad's
+// outboard strip is carried straight up from the bed. A centred
+// pad would overhang both ends and need supports.
 //
-// M2 screws from the board side; M2 nuts are CAPTIVE in hex
-// pockets on the pad's INNER face (same idea as Half A's
+// M2 screws from the board (+Z) side; M2 nuts are CAPTIVE in hex
+// pockets on the pad's OUTER (-Z) back face (same idea as Half A's
 // nut_pocket) so you only turn the screw.
 //   >>> SENSOR_* dims are "MEASURE YOUR BOARD" values <<<
 //   >>> Keep the pad a plain rectangle (Y-constant, no fillets)
 //       or the no-support vertical print of Half B breaks. <<<
-SENSOR_ENABLE   = false;   // master on/off
+SENSOR_ENABLE   = true;   // master on/off
 SENSOR_EAR_SIDE = +1;     // which ear: +1 (+X) or -1 (-X)
 
 // Hole pattern (measured off the board)
@@ -110,13 +114,14 @@ SENSOR_PAIR_DX        = 20.0; // pair spacing along X  (connector edge)
 SENSOR_PAIR_TO_SINGLE = 30.0; // pair -> single hole, along Y
 SENSOR_SINGLE_DX      = 0.0;  // single-hole X offset from pair centre
                               // (0 = centred between the pair)
-SENSOR_HOLE_INSET_X   = 46.0; // X of the INNER pair hole. Pushed well
-                              // past the M4 bolt head (outer edge at
-                              // EAR_BOLT_X+HEAD_DIA/2 ~= 38) so the board
-                              // sits fully clear of it with a margin.
-                              // Lower = tucked in tighter (min ~40);
-                              // raise it if your PCB edge still shadows
-                              // the bolt.
+SENSOR_HOLE_INSET_X   = 46.0; // X of the INNER pair hole. Bounded by
+                              // Half A's bolt-ear TIP (EAR_OUTER_X ~= 40):
+                              // the board mounts on the pad's INNER (+Z)
+                              // face, so its holes must sit OUTBOARD of the
+                              // ear or the PCB would foul Half A on assembly.
+                              // Lower = tucked in tighter (min ~EAR_OUTER_X+4);
+                              // raise it if your measured PCB edge overhangs
+                              // inboard past the ear tip.
 SENSOR_HOLE_DIA       = 2.4;  // M2 clearance, through the pad
 
 // Print alignment: the board hangs past one clamp end; the pad is
@@ -131,12 +136,29 @@ SENSOR_EXTEND_DIR = -1;   // which end the board hangs past:
 // Pad
 SENSOR_PAD_THK    = EAR_THK;  // thickness (Z); holds the captive nut,
                           // keep <= EAR_THK and > nut depth + ~1
-SENSOR_PAD_MARGIN = 5.0;  // border around the hole bounding box
+SENSOR_PAD_MARGIN = 4.0;  // border around each hole. >= the captive
+                          // nut-pocket radius (NUT_FLATS/cos(30)/2) plus
+                          // ~1.5 mm wall, or the pocket breaches the edge.
 
-// Captive M2 hex-nut pockets on the pad's INNER (+Z) face
+// Captive M2 hex-nut pockets on the pad's OUTER (-Z) back face
 SENSOR_NUT_POCKET = true;
 SENSOR_NUT_FLATS  = 4.0;   // M2 nut across-flats (MEASURE)
 SENSOR_NUT_DEPTH  = 1.8;   // M2 nut thickness  (MEASURE)
+
+// ----- Lead-clearance relief on the board (+Z) face ----------
+// The Grove connector + AHT20 solder tails poke ~1 mm proud of the
+// PCB back. Recess the board-contact face so the board seats on three
+// bosses at the screw holes (a standoff plate) and the tails hang in
+// clear air -- so tightening the M2 screws can't bend/crack the PCB.
+// Prints fine: the recess only removes the +Z surface; the solid -Z
+// half of the pad still backs every layer.
+SENSOR_RELIEF        = true;
+SENSOR_RELIEF_DEPTH  = 2.0;  // recess depth; > the ~1 mm lead protrusion
+SENSOR_RELIEF_INSET  = 2.0;  // recess inset from the board-rect edges
+SENSOR_BOSS_DIA      = 7.0;  // seating-boss diameter at each screw. Keep it
+                             // wider than 2*(SENSOR_PAD_MARGIN-INSET) so the
+                             // boss crosses the recess wall into the rim
+                             // (a tangent boss would be non-manifold).
 
 // ----- Mount plate (Half A only) -----------------------------
 // A short radial cantilever between the body and the rail.
@@ -202,18 +224,30 @@ SP_FLUSH_Y = SENSOR_EXTEND_DIR < 0 ? CLAMP_LEN : 0;
 H_YP = SP_FLUSH_Y + SENSOR_EXTEND_DIR * SENSOR_PAD_MARGIN;      // pair row
 H_YS = H_YP + SENSOR_EXTEND_DIR * SENSOR_PAIR_TO_SINGLE;        // single row
 
-// Pad: spans from the flush clamp end out over all three holes.
-// Inner X edge reaches back into the ear for a solid weld.
-PAD_X_LO = min(EAR_OUTER_X - 8, min(H_XI, H_XS) - SENSOR_PAD_MARGIN);
+// Board rectangle: hugs all three holes + margin. Its inner X edge
+// stops at the board (NOT the ear) so the pad is no wider than the
+// board needs; the neck below bridges back to the ear.
+PAD_X_LO = min(H_XI, H_XS) - SENSOR_PAD_MARGIN;   // board inner edge
 PAD_X_HI = max(H_XO, H_XS) + SENSOR_PAD_MARGIN;
 PAD_Y_LO = min(SP_FLUSH_Y, min(H_YP, H_YS) - SENSOR_PAD_MARGIN);
 PAD_Y_HI = max(SP_FLUSH_Y, max(H_YP, H_YS) + SENSOR_PAD_MARGIN);
 
+// Neck: a connector welding the board rectangle back into the bolt
+// ear. It spans only the clamp-body Y range [0, CLAMP_LEN] (where the
+// ear exists), which deletes the wasted corner where the old slab
+// reached both the M4 bolt and out past the clamp end. It still meets
+// the flush print face, so Half B prints support-free (the neck is the
+// widest layer at the bed and only narrows as the print rises).
+NECK_X_LO = EAR_OUTER_X - 8;   // overlap into the ear for a solid weld
+
 assert(SENSOR_PAD_THK <= EAR_THK, "SENSOR_PAD_THK must be <= EAR_THK");
 assert(SENSOR_PAD_THK >= SENSOR_NUT_DEPTH + 0.8,
        "SENSOR_PAD_THK too thin for the captive nut + wall");
-assert(SENSOR_HOLE_INSET_X >= EAR_BOLT_X + HEAD_DIA/2,
-       "inner hole over the M4 bolt head — increase SENSOR_HOLE_INSET_X");
+assert(!SENSOR_RELIEF ||
+       SENSOR_PAD_THK >= SENSOR_RELIEF_DEPTH + SENSOR_NUT_DEPTH + 0.8,
+       "relief recess + nut pocket would meet — thin pad or shallower relief");
+assert(SENSOR_HOLE_INSET_X >= EAR_OUTER_X + 4,
+       "board overlaps Half A's bolt ear on the inner face — raise SENSOR_HOLE_INSET_X");
 assert(abs(SENSOR_EXTEND_DIR) == 1, "SENSOR_EXTEND_DIR must be +1 or -1");
 
 // Plate footprint:
@@ -307,14 +341,27 @@ module nut_pocket() {
 // DHT20 SENSOR PAD (Half B only)
 // =============================================================
 
-// Flat rectangular pad on the chosen ear's OUTER face, sized to
-// cover all three mounting holes. A plain cube (Y-constant, no
-// fillets) so Half B still prints support-free with the bore axis
-// vertical. Its inner X edge overlaps the ear for a clean weld.
+// Pad = a board rectangle hugging the three holes + a neck welding it
+// back to the bolt ear. The board bolts to the pad's INNER (+Z) face;
+// the pad spans the full ear thickness in Z. Both pieces are plain
+// cubes whose footprint only ever narrows as the print rises off the
+// flush face, so Half B still prints support-free with the bore axis
+// vertical. The neck stops at the clamp body (Y in [0, CLAMP_LEN]),
+// removing the dead corner the old full-slab pad carried past the
+// clamp end next to the M4 bolt.
 module sensor_pad_solid() {
-    x0 = SP_S > 0 ? PAD_X_LO : -PAD_X_HI;
-    translate([x0, PAD_Y_LO, SP_Z_OUTER])
-        cube([PAD_X_HI - PAD_X_LO, PAD_Y_HI - PAD_Y_LO, SENSOR_PAD_THK]);
+    pw = PAD_X_HI - PAD_X_LO;             // board rectangle width
+    nw = (PAD_X_LO - NECK_X_LO) + 0.5;    // neck width, +0.5 to overlap board
+    bx = SP_S > 0 ? PAD_X_LO  : -PAD_X_HI;
+    nx = SP_S > 0 ? NECK_X_LO : -(NECK_X_LO + nw);
+    translate([0, 0, SP_Z_OUTER]) {
+        // board rectangle (covers all three holes)
+        translate([bx, PAD_Y_LO, 0])
+            cube([pw, PAD_Y_HI - PAD_Y_LO, SENSOR_PAD_THK]);
+        // neck back into the ear, only over the clamp-body Y range
+        translate([nx, 0, 0])
+            cube([nw, CLAMP_LEN, SENSOR_PAD_THK]);
+    }
 }
 
 // The three sensor mounting-hole centres (pair + single).
@@ -328,16 +375,38 @@ module sensor_holes() {
             cylinder(h = SENSOR_PAD_THK + 2, d = SENSOR_HOLE_DIA);
 }
 
-// Captive M2 hex-nut pockets opening on the pad's INNER (+Z) face
-// (the side away from the board). Reuses the nut_pocket() hex
-// idiom (d = FLATS/cos(30), $fn=6). Nuts drop in from the inner
-// side; the screw threads into them from the board side.
+// Captive M2 hex-nut pockets opening on the pad's OUTER (-Z) back
+// face (the side away from the board). Reuses the nut_pocket() hex
+// idiom (d = FLATS/cos(30), $fn=6). Nuts drop in from the back
+// side; the screw threads into them from the board (+Z) side.
 module sensor_nut_pockets() {
     if (SENSOR_NUT_POCKET)
         for (p = sensor_hole_points())
-            translate([p[0], p[1], SP_Z_INNER - SENSOR_NUT_DEPTH])
+            translate([p[0], p[1], SP_Z_OUTER - 0.5])
                 cylinder(h = SENSOR_NUT_DEPTH + 0.5,
                          d = SENSOR_NUT_FLATS / cos(30), $fn = 6);
+}
+
+// Lead-clearance relief: a shallow pocket in the pad's INNER (+Z)
+// board face, minus a boss left proud around each of the three screw
+// holes. The PCB then seats only on those bosses (its protruding
+// solder tails clear into the pocket). Subtracted from the pad in
+// half_b(). Bosses merge into the pad's edge rim, so nothing floats.
+module sensor_relief() {
+    if (SENSOR_RELIEF) {
+        rw = (PAD_X_HI - PAD_X_LO) - 2*SENSOR_RELIEF_INSET;
+        rh = (PAD_Y_HI - PAD_Y_LO) - 2*SENSOR_RELIEF_INSET;
+        x0 = SP_S > 0 ? PAD_X_LO + SENSOR_RELIEF_INSET
+                      : -(PAD_X_HI - SENSOR_RELIEF_INSET);
+        difference() {
+            translate([x0, PAD_Y_LO + SENSOR_RELIEF_INSET,
+                       SP_Z_INNER - SENSOR_RELIEF_DEPTH])
+                cube([rw, rh, SENSOR_RELIEF_DEPTH + 1]);
+            for (p = sensor_hole_points())
+                translate([p[0], p[1], SP_Z_INNER - SENSOR_RELIEF_DEPTH - 1])
+                    cylinder(h = SENSOR_RELIEF_DEPTH + 3, d = SENSOR_BOSS_DIA);
+        }
+    }
 }
 
 // =============================================================
@@ -418,7 +487,9 @@ module half_b() {
         }
         bolt_through();
         head_counterbore();
-        if (SENSOR_ENABLE) { sensor_holes(); sensor_nut_pockets(); }
+        if (SENSOR_ENABLE) {
+            sensor_holes(); sensor_nut_pockets(); sensor_relief();
+        }
     }
 }
 

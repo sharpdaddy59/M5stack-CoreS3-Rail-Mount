@@ -35,7 +35,9 @@
 //   rail face on the bed. The flange overhangs then rest directly
 //   on the build plate (no support needed there), but the bolt
 //   ears / screw-hole area overhang the bed, so add supports
-//   around the screw holes.
+//   around the screw holes. (With RAIL_TILT != 0 the rail face is
+//   tilted relative to the body; bedding that face flat just tips
+//   the body — same approach, still no rail support needed.)
 //   Half B (no rail): print with the bore axis VERTICAL — it sits
 //   as a half-annulus tube on the bed; body and ears extrude as a
 //   constant cross-section per layer, no supports needed.
@@ -185,6 +187,35 @@ RAIL_DEPTH    = 1.0;    // hat depth above flange tops
 RAIL_FLANGE_T = 1.0;    // flange thickness
 RAIL_GAP      = 0.2;    // slip-fit allowance (subtracted from
                         // each face that contacts the device clip)
+
+// ----- Rail down-tilt (camera aim) ---------------------------
+// Angle the rail about its OWN length axis (X) so the CoreS3,
+// once clipped on, aims its camera downward for a better view of
+// the subject below. Because the tilt is about X — the very axis
+// the device slides along — the rail stays a constant cross-section
+// along its length and the device still slides on from either end.
+//
+// The rail AND its backing plate pitch as one rigid unit, so the
+// clip still meets the identical rail-on-plate it always did (flanges
+// proud, overhanging into open air, open front) — just tipped. A
+// hat-width gusset, kept entirely below the plate, welds it back to
+// the pipe body without ever touching the clip.
+//
+// 0 = flat/horizontal (original part). Positive tips the rail's
+// open (+Z) face — the side the screen/camera point out of — DOWN
+// toward -Y. If the camera ends up aimed the wrong way for your
+// install, flip the sign. Keep it modest (<~45) so the gusset stays
+// printable and the rail clears the flange/clip air gaps.
+RAIL_TILT     = 30.0;   // degrees of camera down-tilt
+
+// Radial stand-off: pushes the whole rail (and thus the clipped
+// device) further OUT from the pipe in +Z. The CoreS3's lower edge
+// swings toward the pipe as it tips back, so this is the knob that
+// buys it clearance — adding S mm here adds ~S mm of gap between the
+// device's lower edge and the pipe. Costs a taller gusset / longer
+// cantilever, so use the least that clears comfortably. 0 = rail sits
+// as close to the pipe as the tilt allows (original radial position).
+RAIL_STANDOFF = 4.0;    // mm pushed out from the pipe
 
 // ----- Exploded view -----------------------------------------
 EXPLODE_GAP   = 35.0;
@@ -463,6 +494,63 @@ module din_rail() {
         cube([RAIL_LEN, RAIL_FLANGE_W_EFF, RAIL_FLANGE_T]);
 }
 
+// Pitch axis (X) hinge for the rail. The rail AND its hat-width
+// backing plate rotate as ONE rigid body about this line, so the
+// device clip still meets the exact rail it always did — flanges
+// proud, ~4 mm Y overhang into open air, open +Z face — only pitched.
+// PIVOT_Z is raised by half the plate width * sin(tilt) so the low
+// edge of the pitched plate only just meets the body's outer surface
+// and never sinks a flange down into the mount (which would bury it
+// and stop the clip from sliding on).
+RAIL_PIVOT_Y = CLAMP_LEN / 2;
+RAIL_PIVOT_Z = R_OUTER + RAIL_STANDOFF + (PLATE_W / 2) * sin(abs(RAIL_TILT));
+
+module rail_tilt() {
+    translate([0, RAIL_PIVOT_Y, RAIL_PIVOT_Z])
+        rotate([RAIL_TILT, 0, 0])
+            translate([0, -RAIL_PIVOT_Y, -RAIL_PIVOT_Z])
+                children();
+}
+
+// Rail + hat-width backing plate in the FLAT reference pose. The
+// plate underside sits at RAIL_PIVOT_Z and the rail (hat + flanges)
+// rides on top — exactly the original working rail-on-plate stack.
+// rail_tilt() then pitches the whole unit rigidly. At RAIL_TILT = 0
+// this lands back on the original geometry (plate top = PLATE_Z_OUTER).
+module rail_unit_flat() {
+    cy   = CLAMP_LEN / 2;
+    base = RAIL_PIVOT_Z + PLATE_THK;        // flange / rail-base plane
+    // hat-width backing plate (gives the flanges their overhang + air)
+    translate([-RAIL_LEN/2, cy - PLATE_W/2, RAIL_PIVOT_Z])
+        cube([RAIL_LEN, PLATE_W, PLATE_THK]);
+    // rail, shifted so its base lands on the plate top
+    translate([0, 0, base - PLATE_Z_OUTER]) din_rail();
+}
+
+// Gusset welding the pitched plate back down to the cylindrical body:
+// a hat-width column from the bore outward, capped by the pitched
+// plate's underside. It lives entirely BELOW the plate and within the
+// hat width, so it never intrudes into the flange-overhang air gaps or
+// the +Z clip space — the clip never touches it.
+module rail_gusset() {
+    cy  = CLAMP_LEN / 2;
+    big = R_OUTER * 6;
+    intersection() {
+        translate([-RAIL_LEN/2, cy - PLATE_W/2, R_BORE])
+            cube([RAIL_LEN, PLATE_W, big]);          // hat-width column
+        rail_tilt()                                  // keep below plate underside
+            translate([-big/2, RAIL_PIVOT_Y - big/2, RAIL_PIVOT_Z - big + 0.6])
+                cube([big, big, big]);               // +0.6: overlap into the
+                                                     // plate, avoid a coplanar
+                                                     // (non-manifold) weld face
+    }
+}
+
+module rail_assembly() {
+    rail_tilt() rail_unit_flat();
+    rail_gusset();
+}
+
 // =============================================================
 // HALVES
 // =============================================================
@@ -471,8 +559,7 @@ module half_a() {
     difference() {
         union() {
             body_extrude() half_a_body_2d();
-            plate_solid();
-            din_rail();
+            rail_assembly();
         }
         bolt_through();
         nut_pocket();
